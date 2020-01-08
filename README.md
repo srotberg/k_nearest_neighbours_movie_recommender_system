@@ -1,4 +1,4 @@
-# movie_k_nearest_neighbours_recommender_system
+# k Nearest Neighbours Movie Recommender System
 The system recommends movies that a user_id has not yet seen based on the how similar they are in taste other users.  
 The system generates a list of k most similar users based on  a distance function that takes into account the difference 
 in adjusted ratings of each user from user_id and the number of movies both of them saw. Then, the system takes all the movies 
