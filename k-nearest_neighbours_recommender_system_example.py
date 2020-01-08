@@ -467,7 +467,7 @@ user_id=10
 highest_rating=5
 
 # the number of most similar taste users we want to compare user_id
-k_nearest=2
+k_nearest=10
 
 # the minimum number of movies both user_id and another user
 # have had to see to be considered as a neighbour
@@ -484,7 +484,7 @@ movie_id_file_name='movies_ids.csv'
 weigh_by_popularity=True
 
 # checks if we need to create a utility matrix
-utility_matrix_exists=True
+utility_matrix_exists=False
 
 # checks if there is a need to create utility_matrix
 if not utility_matrix_exists:
