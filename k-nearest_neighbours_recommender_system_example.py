@@ -1,13 +1,11 @@
 """
 k-nearest neighbours recommender system
-The system recommends movies that a user_id has not yet seen
-based on the how similar they are in taste other users. 
-The system generates a list of k most similar users based on 
-a distance function that takes into account the difference
-in adjusted ratings of each user from user_id and the number
-of movies both of them saw. Then, the system takes all the movies 
-user_id has not seen and weighs them their average rating and 
-by the number of k most similar other users who saw them
+this code produces movie recommendations to a user using k most similar users' movies' preferences. 
+Basically, the program finds the k most similar users to the user we are recommending and finds
+the best movies by those k most similar users that the user we are recommending to has not seen yet. 
+In comparing tastes, the code looks at both ratings and number of movies both users saw. 
+In recommending movies, the code accounts for average movie ratings and the number of users 
+who saw the given movie.
 """
 
 import pandas as pd
@@ -122,7 +120,7 @@ def adjust_ratings(utility_matrix,highest_rating):
                     
 def k_nearest_neighbours\
     (utility_matrix,user_index_to_id,k_nearest,user_id,highest_rating,\
-     minimum_movies_both_users_have_to_watch):
+     minimum_movies_both_users_have_to_watch,weight_on_taste):
     """ Returns a list called k_nearest_dict, which lists the
     users who have the most overlapping preferences with user_id,
     whom we are recommending movies to.
@@ -146,6 +144,11 @@ def k_nearest_neighbours\
         minimum_movies_both_users_have_to_watch: integer of how
         many movies both user have to watch to consider adding the user
         as a nearest neighbour
+        
+        weight_on_taste: float between 0 and 1 which determines the
+        amount of weight the code puts on how similar the taste is for
+        movies that were rated. 1-weight_on_taste is the weight on
+        the number of overlapping movies that the users watched
     """
     
     # gets the user index based on the id of the user
@@ -208,23 +211,20 @@ def k_nearest_neighbours\
             # excludes the movies without overlap                         
             distance[distance<-16*highest_rating]=0
             distance[distance>16*highest_rating]=0
-                        
+                                    
             # measures the distance in preferences
             distance_scalar=np.sum(list(np.array(distance)**2))
-            
-            # multiply scalar
-            multiply_scalar=1000
-                        
+                                                
             # checks if both users saww any of the same movies
             if number_of_movies_both_saw>0: 
             
                 objective_function=\
-                    (distance_scalar/(number_of_movies_both_saw**2))+\
-                    (multiply_scalar/number_of_movies_both_saw)
+                    weight_on_taste*(1-1/(1+distance_scalar))+\
+                    (1-weight_on_taste)*(1/(1+number_of_movies_both_saw))
                     
             else:
                 
-                objective_function=max(k_nearest_array)+1
+                objective_function=max(k_nearest_array)+1.0
             
             # finds the location of the minimum point
             loc=np.argmax(k_nearest_array)
@@ -461,13 +461,13 @@ def create_recommendation_list\
     return sort_recommedation_list
 
 # user_id we are recommending movies to
-user_id=10
+user_id=9
 
 # highest possible rating
 highest_rating=5
 
 # the number of most similar taste users we want to compare user_id
-k_nearest=10
+k_nearest=5
 
 # the minimum number of movies both user_id and another user
 # have had to see to be considered as a neighbour
@@ -484,7 +484,11 @@ movie_id_file_name='movies_ids.csv'
 weigh_by_popularity=True
 
 # checks if we need to create a utility matrix
-utility_matrix_exists=False
+utility_matrix_exists=True
+
+# the weight to give to overlap in taste vs overlap in the number of
+# movies watched
+weight_on_taste=0.15
 
 # checks if there is a need to create utility_matrix
 if not utility_matrix_exists:
@@ -508,7 +512,8 @@ k_nearest_dict,k_nearest_overlap_array=\
     k_nearest_neighbours\
     (utility_matrix,user_index_to_id,\
      k_nearest,user_id,highest_rating,\
-     minimum_movies_both_users_have_to_watch)
+     minimum_movies_both_users_have_to_watch,\
+     weight_on_taste)
         
 # calls a function that  finds all the movies that the k_nearest neighbours
 # saw but the user_id has not
