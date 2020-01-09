@@ -21,4 +21,3 @@ You will need to use these packages:
 * pandas 
 * numpy
 * copy
-* from operator import itemgetter
