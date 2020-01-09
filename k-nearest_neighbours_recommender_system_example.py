@@ -1,17 +1,18 @@
 """
 k-nearest neighbours recommender system
-this code produces movie recommendations to a user using k most similar users' movies' preferences. 
-Basically, the program finds the k most similar users to the user we are recommending and finds
-the best movies by those k most similar users that the user we are recommending to has not seen yet. 
-In comparing tastes, the code looks at both ratings and number of movies both users saw. 
-In recommending movies, the code accounts for average movie ratings and the number of users 
-who saw the given movie.
+The system recommends movies that a user_id has not yet seen
+based on the how similar they are in taste other users. 
+The system generates a list of k most similar users based on 
+a distance function that takes into account the difference
+in adjusted ratings of each user from user_id and the number
+of movies both of them saw. Then, the system takes all the movies 
+user_id has not seen and weighs them their average rating and 
+by the number of k most similar other users who saw them
 """
 
 import pandas as pd
 import numpy as np
 import copy
-from operator import itemgetter
 
 def create_utility_matrix(file_name,highest_rating):
     """ Returns an array utility_matrix with user id 
@@ -415,8 +416,8 @@ def average_rating_of_movies_user_has_not_seen\
 def create_recommendation_list\
     (average_ratings,movie_index_to_id,\
     movie_id_file_name='movies_ids.csv'):
-    """ Returns a sorted list from highest to lower 
-    of movies with their rating.
+    """ Returns sorted list top_10_movies from highest to lower 
+    of movies with their rating
     
     Args:
         average_ratings: dictionary with movie_index as key 
@@ -429,8 +430,8 @@ def create_recommendation_list\
     # read the movies_id and names as a DataFrame
     movie_id_to_name=pd.read_csv(movie_id_file_name)
     
-    # initiates the recommendation list
-    recommendation_list={}
+    # initiates the recommendation dictionary
+    recommendation_dict={}
         
     # loops over all average rating
     for movie_index in average_ratings:
@@ -448,26 +449,54 @@ def create_recommendation_list\
         movie_title=movie_info[movie_info.columns[1]].values[0]
                                   
         # checks if the movie is not already in the recommendation list
-        if movie_title[0][0] not in recommendation_list:
+        if movie_title[0][0] not in recommendation_dict:
                           
-            recommendation_list\
+            recommendation_dict\
                 [movie_title]=\
                 average_ratings[movie_index]
     
-    sort_recommedation_list=\
-        sorted(recommendation_list.items(),\
-        key=itemgetter(1),reverse=True)
+    recommendation_df=pd.DataFrame({
+            'title':list(recommendation_dict.keys()), 
+            'avg_rating': list(recommendation_dict.values())})
     
-    return sort_recommedation_list
+    top_10_movies=recommendation_df.sort_values\
+        (by='avg_rating',ascending=False).head(10)
+        
+    return top_10_movies['title'].tolist()
 
+def top_movies_rated_by_user_id(user_id,file_name,movie_id_file_name):
+    """ Returns the list of top 10 rated movies by user_id
+    
+    Args:
+        user_id: integer referring to the user id
+        file_name: string for the file name
+        movie_id_file_name: string for the movie id file name    
+    """
+    
+    # reads the rating .csv file
+    df_rating=pd.read_csv(file_name)
+    
+    # get the movies sorted by ratings for user id=user_id and gives the
+    # top 10
+    user_ratings=df_rating[df_rating.userId==user_id].\
+        sort_values(by='rating',ascending=False).head(10)
+    
+    # reads the movies list into a dataframe
+    df_movies=pd.read_csv(movie_id_file_name)
+    
+    # merges the movie_ids with the titles
+    user_ratings=user_ratings.merge(df_movies[['movieId','title']])
+    
+    return user_ratings['title'].tolist()
+        
 # user_id we are recommending movies to
-user_id=9
+user_id=99
 
 # highest possible rating
 highest_rating=5
 
 # the number of most similar taste users we want to compare user_id
-k_nearest=5
+k_nearest=10
 
 # the minimum number of movies both user_id and another user
 # have had to see to be considered as a neighbour
@@ -488,7 +517,7 @@ utility_matrix_exists=True
 
 # the weight to give to overlap in taste vs overlap in the number of
 # movies watched
-weight_on_taste=0.15
+weight_on_taste=0.2
 
 # checks if there is a need to create utility_matrix
 if not utility_matrix_exists:
@@ -539,3 +568,8 @@ recommendation_list=\
     (average_ratings,\
     movie_index_to_id,\
     movie_id_file_name)
+    
+# calls a function that gives back the top 10 rated movies
+# of user_id
+top_10_list=top_movies_rated_by_user_id\
+    (user_id,file_name,movie_id_file_name)
