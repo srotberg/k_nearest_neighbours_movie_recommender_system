@@ -513,7 +513,7 @@ movie_id_file_name='movies_ids.csv'
 weigh_by_popularity=True
 
 # checks if we need to create a utility matrix
-utility_matrix_exists=True
+utility_matrix_exists=False
 
 # the weight to give to overlap in taste vs overlap in the number of
 # movies watched
